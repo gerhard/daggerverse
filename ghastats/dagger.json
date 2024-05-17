@@ -1,0 +1,12 @@
+{
+  "name": "ghastats",
+  "sdk": "go",
+  "dependencies": [
+    {
+      "name": "gh",
+      "source": "github.com/sagikazarmark/daggerverse/gh@b45dbd7448bb967aca4a538af9ce7f042abf0316"
+    }
+  ],
+  "source": ".",
+  "engineVersion": "v0.11.4"
+}
