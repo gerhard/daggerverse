@@ -15,21 +15,15 @@ type DagrrFly struct {
 
 // App manifest: `dagger call on-flyio --token=env:FLY_API_TOKEN manifest file --path=fly.toml export --path=fly.toml`
 func (m *DagrrFly) Manifest(
-	// Disk size in GB
-	//
+	// Primary region to use for deploying new machines, see https://fly.io/docs/reference/configuration/#primary-region
 	// +optional
-	// +default="100GB"
-	disk string,
+	primaryRegion string,
 
 	// VM size, see https://fly.io/docs/about/pricing/#compute
 	//
 	// +optional
 	// +default="performance-2x"
 	size string,
-
-	// Primary region to use for deploying new machines, see https://fly.io/docs/reference/configuration/#primary-region
-	// +optional
-	primaryRegion string,
 
 	// Memory to request, see https://fly.io/docs/reference/configuration/#memory
 	// +optional
@@ -38,6 +32,12 @@ func (m *DagrrFly) Manifest(
 	// GPU kind to use, see https://fly.io/docs/reference/configuration/#gpu_kind
 	// +optional
 	gpuKind string,
+
+	// Disk size in GB
+	//
+	// +optional
+	// +default="100GB"
+	disk string,
 
 	// Environment variables to export on the machine, see https://fly.io/docs/reference/configuration/#the-env-variables-section
 	// Each env var needs to follow the TOML format (eg. MY_KEY = "value")

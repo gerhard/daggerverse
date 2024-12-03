@@ -14,7 +14,7 @@ import (
 
 const (
 	// https://hub.docker.com/r/flyio/flyctl/tags
-	latestVersion = "0.2.93"
+	latestVersion = "0.3.45"
 )
 
 type Flyio struct {
@@ -36,7 +36,7 @@ func New(
 	// +default="personal"
 	org string,
 
-	// flyctl version to use: `--version=0.2.79`
+	// flyctl version to use: `--version=0.2.29`
 	//
 	// +optional
 	version string,
