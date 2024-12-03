@@ -108,3 +108,15 @@ func (m *Flyio) Terminal(
 		WithExec([]string{"/flyctl", "ssh", "console", "--app", app, "--org", m.Org}).
 		Terminal()
 }
+
+// Destroys app: `dagger call ... destroy --app=gostatic-example-2024-07-03`
+func (m *Flyio) Destroy(
+	ctx context.Context,
+	// App name: `--app=myapp-2024-07-03`
+	app string,
+
+) (string, error) {
+	return m.Container.
+		WithExec([]string{"/flyctl", "apps", "destroy", "--yes", app}).
+		Stdout(ctx)
+}
