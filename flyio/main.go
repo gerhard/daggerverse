@@ -8,12 +8,13 @@ import (
 	"context"
 	"fmt"
 	"main/internal/dagger"
+	"strings"
 	"time"
 )
 
 const (
 	// https://hub.docker.com/r/flyio/flyctl/tags
-	latestVersion = "0.2.93"
+	latestVersion = "0.3.45"
 )
 
 type Flyio struct {
@@ -35,7 +36,7 @@ func New(
 	// +default="personal"
 	org string,
 
-	// flyctl version to use: `--version=0.2.79`
+	// flyctl version to use: `--version=0.2.29`
 	//
 	// +optional
 	version string,
@@ -68,11 +69,19 @@ func (m *Flyio) Deploy(
 	ctx context.Context,
 	// App directory - must contain `fly.toml`
 	dir *dagger.Directory,
+	// Regions - only deploy to the following regions
+	// +optional
+	regions []string,
 ) (string, error) {
+	args := []string{"/flyctl", "deploy"}
+	if len(regions) > 0 {
+		args = append(args, "--regions")
+		args = append(args, strings.Join(regions, ","))
+	}
 	return m.Container.
 		WithMountedDirectory("/app", dir).
 		WithWorkdir("/app").
-		WithExec([]string{"/flyctl", "deploy"}).
+		WithExec(args).
 		Stdout(ctx)
 }
 
@@ -98,4 +107,16 @@ func (m *Flyio) Terminal(
 	return m.Container.
 		WithExec([]string{"/flyctl", "ssh", "console", "--app", app, "--org", m.Org}).
 		Terminal()
+}
+
+// Destroys app: `dagger call ... destroy --app=gostatic-example-2024-07-03`
+func (m *Flyio) Destroy(
+	ctx context.Context,
+	// App name: `--app=myapp-2024-07-03`
+	app string,
+
+) (string, error) {
+	return m.Container.
+		WithExec([]string{"/flyctl", "apps", "destroy", "--yes", app}).
+		Stdout(ctx)
 }

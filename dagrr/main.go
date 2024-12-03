@@ -79,3 +79,8 @@ func (m *Dagrr) OnFlyio(
 func (m *Dagrr) versionUrlized() string {
 	return "v" + strings.ReplaceAll(m.Version, ".", "-")
 }
+
+// Returns the app name: `dagger call get-app`
+func (m *Dagrr) GetApp() string {
+	return m.App
+}
