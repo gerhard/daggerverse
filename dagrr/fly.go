@@ -123,13 +123,12 @@ kill_timeout = 30
 // Then: `export _EXPERIMENTAL_DAGGER_RUNNER_HOST=tcp://<APP_NAME>.internal:2345`
 // Assumes https://fly.io/docs/networking/private-networking (clashes with Tailscale MagicDNS)
 func (m *DagrrFly) Deploy(
+	ctx context.Context,
 	// +optional
 	dir *dagger.Directory,
 	// +optional
 	regions []string,
 ) (string, error) {
-	ctx := context.Background()
-
 	create, err := m.Flyio.Create(ctx, m.Dagrr.App)
 	if err != nil {
 		return create, err
@@ -142,4 +141,9 @@ func (m *DagrrFly) Deploy(
 	return m.Flyio.Deploy(ctx, dir, dagger.FlyioDeployOpts{
 		Regions: regions,
 	})
+}
+
+// Destroy the application: `dagger call on-flyio --token=env:FLY_API_TOKEN destroy`
+func (m *DagrrFly) Destroy(ctx context.Context) {
+	m.Flyio.Destroy(ctx, m.Dagrr.App)
 }
