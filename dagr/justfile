@@ -1,0 +1,101 @@
+# vim: set tabstop=4 shiftwidth=4 expandtab:
+
+[private]
+default:
+    just --list
+
+[private]
+fmt:
+    just --fmt --check --unstable
+
+[private]
+dagger:
+    @dagger version > /dev/null \
+    || echo "{{ _REDB }}{{ _WHITE }} Please install dagger CLI {{ _RESET }} https://docs.dagger.io/install/"
+
+[private]
+flyctl:
+    @flyctl version > /dev/null \
+    || echo "{{ _REDB }}{{ _WHITE }} Please install flyctl CLI {{ _RESET }} https://fly.io/docs/flyctl/install/"
+    @flyctl auth whoami > /dev/null
+
+_DAGR_APP_NAME := "$USER-testing-dagr-" + datetime("%Y-%m-%d")
+
+_point := 'printf "\n🗡️ "'
+
+# List all functions
+functions: dagger
+    @{{ _point }}
+    dagger functions
+    @{{ _point }}
+    dagger functions on-flyio
+
+# Get $app
+get-app app=_DAGR_APP_NAME: dagger
+    @{{ _point }}
+    dagger call get-app
+    @{{ _point }}
+    dagger call --app={{ app }} get-app
+
+# Generate manifest for $app
+manifest app=_DAGR_APP_NAME: dagger flyctl
+    @{{ _point }}
+    FLY_API_TOKEN=$(flyctl auth token) dagger call --app={{ app }} \
+        on-flyio --token=env:FLY_API_TOKEN \
+            manifest \
+                file --path=fly.toml \
+                    export --path=fly.toml
+    @{{ _point }}
+    cat fly.toml
+
+# Deploy default $app
+deploy app=_DAGR_APP_NAME:
+    @{{ _point }}
+    FLY_API_TOKEN=$(flyctl auth token) dagger call --app={{ app }} \
+        on-flyio --token=env:FLY_API_TOKEN \
+            deploy
+
+# Deploy $app from generated manifest
+deploy-with-manifest app=_DAGR_APP_NAME: manifest
+    @{{ _point }}
+    FLY_API_TOKEN=$(flyctl auth token) dagger call --app={{ app }} \
+        on-flyio --token=env:FLY_API_TOKEN \
+            deploy --dir=.
+
+# Deploy $app with GPU and all other customizations
+deploy-all-custom app=_DAGR_APP_NAME: dagger flyctl
+    @{{ _point }}
+    FLY_API_TOKEN=$(flyctl auth token) dagger call --version=0.13.7 --app={{ app }} \
+        on-flyio --token=env:FLY_API_TOKEN \
+            --primary-region=ord --disk=50GB \
+            --size=performance-1x \
+            --memory=4GB \
+            --gpu-kind=a10 \
+            --env="FOO = 'foo'" --env="BAR = 'bar'" \
+                deploy
+
+# Destroy $app
+destroy app=_DAGR_APP_NAME:
+    @{{ _point }}
+    FLY_API_TOKEN=$(flyctl auth token) dagger call --app={{ app }} \
+        on-flyio --token=env:FLY_API_TOKEN \
+            destroy
+    @rm -f fly.toml
+
+# Run E2E test
+test-e2e:
+    @just functions
+    @just get-app
+    @just deploy
+    @just destroy
+    @just deploy-with-manifest
+    @just destroy
+    @just deploy-all-custom
+    @just destroy
+
+# https://linux.101hacks.com/ps1-examples/prompt-color-using-tput/
+
+_RESET := "$(tput sgr0)"
+_WHITE := "$(tput bold)$(tput setaf 7)"
+_MAGENTA := "$(tput bold)$(tput setaf 5)"
+_REDB := "$(tput setab 1)$(tput setaf 0)"

@@ -6,61 +6,44 @@ import (
 	"fmt"
 )
 
-type DagrrFly struct {
+type DagrFly struct {
 	// +private
-	Dagrr *Dagrr
+	Dagr *Dagr
 	// +private
 	Flyio *dagger.Flyio
+	// +private
+	PrimaryRegion string
+	// +private
+	Size string
+	// +private
+	Memory string
+	// +private
+	Disk string
+	// +private
+	GPU string
+	// +private
+	Env []string
 }
 
 // App manifest: `dagger call on-flyio --token=env:FLY_API_TOKEN manifest file --path=fly.toml export --path=fly.toml`
-func (m *DagrrFly) Manifest(
-	// Primary region to use for deploying new machines, see https://fly.io/docs/reference/configuration/#primary-region
-	// +optional
-	primaryRegion string,
-
-	// VM size, see https://fly.io/docs/about/pricing/#compute
-	//
-	// +optional
-	// +default="performance-2x"
-	size string,
-
-	// Memory to request, see https://fly.io/docs/reference/configuration/#memory
-	// +optional
-	memory string,
-
-	// GPU kind to use, see https://fly.io/docs/reference/configuration/#gpu_kind
-	// +optional
-	gpuKind string,
-
-	// Disk size in GB
-	//
-	// +optional
-	// +default="100GB"
-	disk string,
-
-	// Environment variables to export on the machine, see https://fly.io/docs/reference/configuration/#the-env-variables-section
-	// Each env var needs to follow the TOML format (eg. MY_KEY = "value")
-	// FIXME(samalba): turn this into a map[string]string once supported by the Dagger Go SDK
-	// +optional
-	environment []string,
-) *dagger.Directory {
-	if primaryRegion != "" {
+func (m *DagrFly) Manifest() *dagger.Directory {
+	var primaryRegion string
+	if m.PrimaryRegion != "" {
 		// workaround to leave the config untouched if the region isn't set
-		primaryRegion = fmt.Sprintf("primary_region = %q", primaryRegion)
-	}
-
-	envVars := ""
-	for _, envVar := range environment {
-		if envVars == "" {
-			envVars = "[env]\n"
-		}
-		envVars = fmt.Sprintf("%s  %s\n", envVars, envVar)
+		primaryRegion = fmt.Sprintf("primary_region = %q", m.PrimaryRegion)
 	}
 
 	engineImageFlavor := ""
-	if gpuKind != "" {
+	if m.GPU != "" {
 		engineImageFlavor = "-gpu"
+	}
+
+	envConfig := ""
+	for _, envVar := range m.Env {
+		if envConfig == "" {
+			envConfig = "[env]\n"
+		}
+		envConfig = fmt.Sprintf("%s  %s\n", envConfig, envVar)
 	}
 
 	toml := fmt.Sprintf(`# https://fly.io/docs/reference/configuration/
@@ -106,14 +89,14 @@ kill_timeout = 30
 
 [[vm]]
   size = "%s"
-`, m.Dagrr.App, primaryRegion, envVars, m.Dagrr.Version, engineImageFlavor, disk, size)
+`, m.Dagr.App, primaryRegion, envConfig, m.Dagr.Version, engineImageFlavor, m.Disk, m.Size)
 
-	if memory != "" {
-		toml = fmt.Sprintf("%s  memory = %q\n", toml, memory)
+	if m.Memory != "" {
+		toml = fmt.Sprintf("%s  memory = %q\n", toml, m.Memory)
 	}
 
-	if gpuKind != "" {
-		toml = fmt.Sprintf("%s  gpu_kind = %q\n", toml, gpuKind)
+	if m.GPU != "" {
+		toml = fmt.Sprintf("%s  gpu_kind = %q\n", toml, m.GPU)
 	}
 
 	return dag.Directory().WithNewFile("fly.toml", toml)
@@ -122,20 +105,20 @@ kill_timeout = 30
 // Deploy with default manifest: `dagger call on-flyio --token=env:FLY_API_TOKEN deploy`
 // Then: `export _EXPERIMENTAL_DAGGER_RUNNER_HOST=tcp://<APP_NAME>.internal:2345`
 // Assumes https://fly.io/docs/networking/private-networking (clashes with Tailscale MagicDNS)
-func (m *DagrrFly) Deploy(
+func (m *DagrFly) Deploy(
 	ctx context.Context,
 	// +optional
 	dir *dagger.Directory,
 	// +optional
 	regions []string,
 ) (string, error) {
-	create, err := m.Flyio.Create(ctx, m.Dagrr.App)
+	create, err := m.Flyio.Create(ctx, m.Dagr.App)
 	if err != nil {
 		return create, err
 	}
 
 	if dir == nil {
-		dir = m.Manifest("100GB", "performance-2x", "", "", "", nil)
+		dir = m.Manifest()
 	}
 
 	return m.Flyio.Deploy(ctx, dir, dagger.FlyioDeployOpts{
@@ -144,6 +127,6 @@ func (m *DagrrFly) Deploy(
 }
 
 // Destroy the application: `dagger call on-flyio --token=env:FLY_API_TOKEN destroy`
-func (m *DagrrFly) Destroy(ctx context.Context) {
-	m.Flyio.Destroy(ctx, m.Dagrr.App)
+func (m *DagrFly) Destroy(ctx context.Context) {
+	m.Flyio.Destroy(ctx, m.Dagr.App)
 }
