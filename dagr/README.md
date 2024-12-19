@@ -23,3 +23,5 @@ This is the quickest (and currently deprecated) way of setting the `FLY_API_TOKE
 To see what else is possible, consider running the following command: [`just`](https://github.com/casey/just)
 
 This is what you can expect to see:
+
+https://github.com/user-attachments/assets/c7a857a9-b561-454c-bb54-1a05f4a0cb1d
