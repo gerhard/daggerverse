@@ -12,6 +12,7 @@ import (
 
 	"github.com/disgoorg/disgo/webhook"
 	"github.com/slack-go/slack"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type Notify struct{}
@@ -73,6 +74,10 @@ func (n *Notify) Slack(
 	threadId string,
 ) (string, error) {
 	clearToken, err := token.Plaintext(ctx)
+	if err != nil {
+		return "", err
+	}
+
 	api := slack.New(clearToken)
 	attachment := slack.Attachment{
 		Color:      color,
@@ -104,4 +109,17 @@ func (n *Notify) Slack(
 	}
 
 	return ts, nil
+}
+
+// helper to return a dagger cloud trace link from the OTEL data in ctx.
+// useful as input to "message" to link your slack or discord notification back up to dagger cloud.
+func (n *Notify) DaggerCloudTraceUrl(
+	ctx context.Context,
+) (string, error) {
+	spanContext := trace.SpanFromContext(ctx).SpanContext()
+	if !spanContext.IsValid() {
+		return "", errors.New("unable to find trace id in context: check your otel configuration")
+	}
+
+	return fmt.Sprintf("https://dagger.cloud/dagger/traces/%s", spanContext.TraceID().String()), nil
 }
