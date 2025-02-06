@@ -1,5 +1,3 @@
-[![tested-with-dagger-version](https://img.shields.io/badge/Tested%20with%20dagger-0.10.1-success?style=for-the-badge)](https://github.com/dagger/dagger/releases/tag/v0.10.1)
-
 # Dagger Notify Module
 
 ## Discord
