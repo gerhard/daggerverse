@@ -1,6 +1,7 @@
 {
   "name": "flyio",
-  "engineVersion": "v0.14.0",
-  "sdk": "go",
-  "source": "."
+  "engineVersion": "v0.16.1",
+  "sdk": {
+    "source": "go"
+  }
 }

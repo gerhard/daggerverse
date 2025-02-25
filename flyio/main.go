@@ -14,7 +14,7 @@ import (
 
 const (
 	// https://hub.docker.com/r/flyio/flyctl/tags
-	latestVersion = "0.3.45"
+	latestVersion = "0.3.86"
 )
 
 type Flyio struct {
@@ -72,11 +72,17 @@ func (m *Flyio) Deploy(
 	// Regions - only deploy to the following regions
 	// +optional
 	regions []string,
+	// Container image to use when deploying
+	// +optiona
+	image string,
 ) (string, error) {
 	args := []string{"/flyctl", "deploy"}
 	if len(regions) > 0 {
 		args = append(args, "--regions")
 		args = append(args, strings.Join(regions, ","))
+	}
+	if image != "" {
+		args = append(args, "--image", image)
 	}
 	return m.Container.
 		WithMountedDirectory("/app", dir).
@@ -92,8 +98,7 @@ func (m *Flyio) Create(
 	app string,
 
 ) (string, error) {
-	return m.Container.
-		WithExec([]string{"/flyctl", "apps", "create", app, "--org", m.Org}).
+	return m.Run(ctx, []string{"/flyctl", "apps", "create", app, "--org", m.Org}).
 		Stdout(ctx)
 }
 
@@ -104,8 +109,7 @@ func (m *Flyio) Terminal(
 	app string,
 
 ) *dagger.Container {
-	return m.Container.
-		WithExec([]string{"/flyctl", "ssh", "console", "--app", app, "--org", m.Org}).
+	return m.Run(ctx, []string{"/flyctl", "ssh", "console", "--app", app, "--org", m.Org}).
 		Terminal()
 }
 
@@ -116,7 +120,17 @@ func (m *Flyio) Destroy(
 	app string,
 
 ) (string, error) {
-	return m.Container.
-		WithExec([]string{"/flyctl", "apps", "destroy", "--yes", app}).
+	return m.Run(ctx, []string{"apps", "destroy", "--yes", app}).
 		Stdout(ctx)
+}
+
+// Run command against app, e.g. destroy, scale, etc.: `dagger call ... run --cmd="machines list --app=myapp-2024-07-03"`
+func (m *Flyio) Run(
+	ctx context.Context,
+	// flyctl command
+	cmd []string,
+) *dagger.Container {
+	args := append([]string{"/flyctl"}, cmd...)
+	return m.Container.
+		WithExec(args)
 }

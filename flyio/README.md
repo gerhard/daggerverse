@@ -1,5 +1,3 @@
-[![tested-with-dagger-version](https://img.shields.io/badge/Tested%20with%20dagger-0.11.9-success?style=for-the-badge)](https://github.com/dagger/dagger/releases/tag/v0.10.1)
-
 # Dagger Fly.io Module
 
 ![dagger-min-version](https://img.shields.io/badge/dagger%20version-v0.11.9-green)
