@@ -14,7 +14,7 @@ import (
 
 const (
 	// https://hub.docker.com/r/flyio/flyctl/tags
-	latestVersion = "0.3.86"
+	latestVersion = "0.3.116"
 )
 
 type Flyio struct {
@@ -73,7 +73,7 @@ func (m *Flyio) Deploy(
 	// +optional
 	regions []string,
 	// Container image to use when deploying
-	// +optiona
+	// +optional
 	image string,
 ) (string, error) {
 	args := []string{"/flyctl", "deploy"}
@@ -98,7 +98,7 @@ func (m *Flyio) Create(
 	app string,
 
 ) (string, error) {
-	return m.Run(ctx, []string{"/flyctl", "apps", "create", app, "--org", m.Org}).
+	return m.Run(ctx, []string{"apps", "create", app, "--org", m.Org}).
 		Stdout(ctx)
 }
 
@@ -109,7 +109,7 @@ func (m *Flyio) Terminal(
 	app string,
 
 ) *dagger.Container {
-	return m.Run(ctx, []string{"/flyctl", "ssh", "console", "--app", app, "--org", m.Org}).
+	return m.Run(ctx, []string{"ssh", "console", "--app", app, "--org", m.Org}).
 		Terminal()
 }
 
